@@ -1,8 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
   provider = "prisma-client"
   output   = "../generated/prisma"
@@ -10,4 +5,40 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+}
+
+enum DriverStatus {
+  AVAILABLE
+  BUSY
+  OFFLINE
+}
+
+enum OrderStatus {
+  PENDING
+  ASSIGNED
+  PICKED_UP
+  DELIVERED
+}
+
+model Driver {
+  id        String       @id @default(uuid())
+  name      String
+  status    DriverStatus @default(OFFLINE)
+  // PostGIS Point geometry for real-time tracking
+  location  Unsupported("geometry(Point, 4326)")? 
+  updatedAt DateTime     @updatedAt
+  orders    Order[]
+}
+
+model Order {
+  id              String      @id @default(uuid())
+  status          OrderStatus @default(PENDING)
+  pickupLocation  Unsupported("geometry(Point, 4326)")
+  dropoffLocation Unsupported("geometry(Point, 4326)")
+  
+  driverId        String?
+  driver          Driver?     @relation(fields: [driverId], references: [id])
+  
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
 }
